@@ -70,7 +70,7 @@ local function request_llm(prompt, callback)
   local success, parsed_response = pcall(vim.fn.json_decode, response)
   if not success then
     print("Failed to decode response: " .. response)
-    callback("Error: Invalid JSON response")
+    callback(response)
     return
   end
 
@@ -79,7 +79,7 @@ local function request_llm(prompt, callback)
     callback(parsed_response.choices[1].text)
   else
     print("Unexpected API response: " .. vim.inspect(parsed_response))
-    callback("Error: No valid choices in response")
+    callback(response)
   end
 end
 
