@@ -42,13 +42,36 @@ end
 
 -- Main function to handle text selection, input, and API call
 function M.replace_with_llm()
-  print('enter func')
+  local mode = vim.fn.mode()
 
-  -- Get the selected text
+  -- Ensure we're in visual mode
+  if mode ~= 'v' and mode ~= 'V' then
+    print("Please select text in visual mode first!")
+    return
+  end
+
+  -- Get visual selection
   local start_row, start_col = unpack(vim.api.nvim_buf_get_mark(0, '<'))
   local end_row, end_col = unpack(vim.api.nvim_buf_get_mark(0, '>'))
+
+  -- Adjust end_col for line-wise visual mode
+  if mode == 'V' then
+    start_col = 0
+    end_col = #vim.api.nvim_buf_get_lines(0, end_row - 1, end_row, false)[1]
+  end
+
+  -- Retrieve the selected text
   local lines = vim.api.nvim_buf_get_lines(0, start_row - 1, end_row, false)
+  if #lines == 0 then
+    print("No text selected!")
+    return
+  end
+
+  -- Concatenate lines into a single string for processing
   local selected_text = table.concat(lines, "\n")
+
+  -- Debugging output
+  print("Selected text: " .. selected_text)
 
   -- Create the prompt window
   local buf = create_prompt_window()
@@ -60,8 +83,11 @@ function M.replace_with_llm()
 
     if prompt and #prompt > 0 then
       request_llm(prompt, function(response)
+        -- Split response into lines
+        local response_lines = vim.split(response, "\n", { plain = true })
+
         -- Replace the selected text with the response
-        vim.api.nvim_buf_set_text(0, start_row - 1, start_col - 1, end_row - 1, end_col, { response })
+        vim.api.nvim_buf_set_text(0, start_row - 1, start_col, end_row - 1, end_col, response_lines)
         print("Response inserted!")
       end)
     else
