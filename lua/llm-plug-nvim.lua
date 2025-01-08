@@ -69,6 +69,8 @@ local function request_llm(prompt, callback)
   -- Execute the curl command and get the response
   local response = vim.fn.system(cmd)
 
+  callback(response)
+
   -- Parse the JSON response
   local success, parsed_response = pcall(vim.fn.json_decode, response)
   if not success then
