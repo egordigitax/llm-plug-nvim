@@ -28,29 +28,21 @@ end
 
 -- Function to make the HTTP request to LLM API
 local function request_llm(prompt, callback)
-  local http = require('socket.http')
-  local ltn12 = require('ltn12')
+  print(prompt)
+  local url = "https://api.example.com/v1/llm" -- Replace with your actual API endpoint
+  local api_key = "YOUR_API_KEY" -- Replace with your API key
+  local headers = "-H 'Content-Type: application/json' -H 'Authorization: Bearer " .. api_key .. "'"
+  local data = vim.fn.json_encode({ prompt = prompt })
 
-  local response_body = {}
-  local request_body = vim.fn.json_encode({ prompt = prompt })
+  local cmd = string.format("curl -s -X POST %s -d '%s' '%s'", headers, data, url)
+  local response = vim.fn.system(cmd)
 
-  local _, code = http.request({
-    url = "https://api.example.com/v1/llm", -- Replace with actual LLM endpoint
-    method = "POST",
-    headers = {
-      ["Content-Type"] = "application/json",
-      ["Content-Length"] = tostring(#request_body),
-      ["Authorization"] = "Bearer YOUR_API_KEY" -- Replace with your API key
-    },
-    source = ltn12.source.string(request_body),
-    sink = ltn12.sink.table(response_body),
-  })
-
-  if code == 200 then
-    local response = vim.fn.json_decode(table.concat(response_body))
-    callback(response.choices[1].text or "No response")
+  -- Parse the response
+  local success, parsed_response = pcall(vim.fn.json_decode, response)
+  if success and parsed_response.choices and parsed_response.choices[1] then
+    callback(parsed_response.choices[1].text)
   else
-    callback("Error: " .. (code or "Unknown"))
+    callback("Error: Unable to parse LLM response")
   end
 end
 
