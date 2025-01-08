@@ -98,7 +98,7 @@ end
 
 function M.setup()
   vim.api.nvim_set_keymap('n', '<Leader>test', ":lua print('Plugin initialized and keybinding works!')<CR>", { noremap = true, silent = false })
-  vim.api.nvim_set_keymap('n', 'gl', ":lua require('llm-plug-nvim').replace_with_llm()<CR>", { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('v', 'gl', ":lua require('llm-plug-nvim').replace_with_llm()<CR>", { noremap = true, silent = true })
 end
 
 M.setup()
