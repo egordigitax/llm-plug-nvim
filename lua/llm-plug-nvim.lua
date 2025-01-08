@@ -63,6 +63,8 @@ local function request_llm(prompt, callback)
     opts.url
   )
 
+  print(cmd)
+
   -- Execute the curl command and get the response
   local response = vim.fn.system(cmd)
 
