@@ -46,8 +46,13 @@ local function create_prompt_window()
   return buf
 end
 
--- Function to make the HTTP request to LLM API
 local function request_llm(prompt, callback)
+  -- Ensure `opts` and required fields are set
+  if not opts or not opts.api_key or not opts.llm_url or not opts.model then
+    error("Missing required configuration in `opts`")
+    return
+  end
+
   -- JSON payload
   local data = vim.fn.json_encode({
     model = opts.model,
@@ -56,35 +61,53 @@ local function request_llm(prompt, callback)
     },
   })
 
-  -- Construct curl command
+  -- Construct curl command safely
   local cmd = string.format(
     "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -d '%s' '%s'",
-    opts.api_key,
-    data:gsub("'", "\\'"), -- Escape single quotes for shell compatibility
+    vim.fn.escape(opts.api_key, "'"),       -- Escape the API key safely
+    vim.fn.escape(data, "'"):gsub("'", "\\'"), -- Escape JSON payload safely
     opts.llm_url
   )
 
-  callback(cmd)
+  -- Debug callback with the constructed curl command
+  if callback then
+    callback(cmd)
+  end
 
   -- Execute the curl command and get the response
   local response = vim.fn.system(cmd)
 
-  callback(response)
+  -- Debug callback with the raw response
+  if callback then
+    callback(response)
+  end
+
+  -- Handle curl errors
+  if vim.v.shell_error ~= 0 then
+    print("Curl command failed with exit code: " .. vim.v.shell_error)
+    callback("Error: Unable to reach the LLM API.")
+    return
+  end
 
   -- Parse the JSON response
   local success, parsed_response = pcall(vim.fn.json_decode, response)
   if not success then
     print("Failed to decode response: " .. response)
-    callback(response)
+    callback("Error: Failed to parse LLM response.")
     return
   end
 
   -- Extract the result from `choices`
-  if parsed_response and parsed_response.choices and parsed_response.choices[1] then
-    callback(parsed_response.choices[1].message.content)
+  local content = parsed_response.choices
+      and parsed_response.choices[1]
+      and parsed_response.choices[1].message
+      and parsed_response.choices[1].message.content
+
+  if content then
+    callback(content)
   else
     print("Unexpected API response: " .. vim.inspect(parsed_response))
-    callback(response)
+    callback("Error: Invalid LLM response format.")
   end
 end
 
