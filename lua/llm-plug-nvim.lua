@@ -4,6 +4,7 @@ local M = {}
 local opts = {
   llm_url = "https://api.openai.com/v1/chat/completions", -- Default LLM URL
   api_key = "YOUR_API_KEY", -- Default API Key
+  model = "gpt-4o-mini",
 }
 
 -- Function to configure the plugin
@@ -49,7 +50,7 @@ end
 local function request_llm(prompt, callback)
   -- JSON payload
   local data = vim.fn.json_encode({
-    model = 'gpt-4o',
+    model = opts.model,
     messages = {
       { role = 'user', content = prompt },
     },
