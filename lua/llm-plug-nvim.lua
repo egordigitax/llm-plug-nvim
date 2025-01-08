@@ -60,7 +60,7 @@ local function request_llm(prompt, callback)
     "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -d '%s' '%s'",
     opts.api_key,
     data:gsub("'", "\\'"), -- Escape single quotes for shell compatibility
-    opts.url
+    opts.llm_url
   )
 
   callback(cmd)
