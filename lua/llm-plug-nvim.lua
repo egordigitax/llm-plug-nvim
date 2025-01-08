@@ -44,12 +44,6 @@ end
 function M.replace_with_llm()
   local mode = vim.fn.mode()
 
-  -- Ensure we're in visual mode
-  if mode ~= 'v' and mode ~= 'V' then
-    print("Please select text in visual mode first!")
-    return
-  end
-
   -- Get visual selection
   local start_row, start_col = unpack(vim.api.nvim_buf_get_mark(0, '<'))
   local end_row, end_col = unpack(vim.api.nvim_buf_get_mark(0, '>'))
