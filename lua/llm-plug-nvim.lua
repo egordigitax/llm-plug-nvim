@@ -57,11 +57,6 @@ end
 -- Main function to handle text selection, input, and API call
 function M.replace_with_llm()
   print('enter func')
-  local mode = vim.fn.mode()
-  if mode ~= 'v' and mode ~= 'V' then
-    print("Please select text in visual mode first!")
-    return
-  end
 
   -- Get the selected text
   local start_row, start_col = unpack(vim.api.nvim_buf_get_mark(0, '<'))
