@@ -29,7 +29,7 @@ end
 -- Function to make the HTTP request to LLM API
 local function request_llm(prompt, callback)
   print(prompt)
-  local url = "https://api.example.com/v1/llm" -- Replace with your actual API endpoint
+  local url = "http://localhost:3000/" -- Replace with your actual API endpoint
   local api_key = "YOUR_API_KEY" -- Replace with your API key
   local headers = "-H 'Content-Type: application/json' -H 'Authorization: Bearer " .. api_key .. "'"
   local data = vim.fn.json_encode({ prompt = prompt })
@@ -39,8 +39,8 @@ local function request_llm(prompt, callback)
 
   -- Parse the response
   local success, parsed_response = pcall(vim.fn.json_decode, response)
-  if success and parsed_response.choices and parsed_response.choices[1] then
-    callback(parsed_response.choices[1].text)
+  if success and parsed_response then
+    callback(parsed_response)
   else
     callback("Error: Unable to parse LLM response")
   end
