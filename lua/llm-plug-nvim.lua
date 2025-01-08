@@ -1,6 +1,25 @@
 local M = {}
 
 
+local opts = {
+  llm_url = "https://api.openai.com/v1/chat/completions", -- Default LLM URL
+  api_key = "YOUR_API_KEY", -- Default API Key
+}
+
+-- Function to configure the plugin
+function M.setup(user_opts)
+  -- Merge user-provided options with defaults
+  opts = vim.tbl_extend("force", opts, user_opts or {})
+
+  -- Debugging output to confirm setup
+  print("LLM Plugin configured with URL: " .. opts.llm_url)
+
+  -- Keymap setup
+  vim.keymap.set('v', 'gl', function()
+    M.replace_with_llm()
+  end, { noremap = true, silent = true })
+end
+
 
 -- Function to create the floating window for prompt input
 local function create_prompt_window()
@@ -28,16 +47,40 @@ end
 
 -- Function to make the HTTP request to LLM API
 local function request_llm(prompt, callback)
-  print(prompt)
-  local url = "http://localhost:3000/" -- Replace with your actual API endpoint
-  local api_key = "YOUR_API_KEY" -- Replace with your API key
-  local headers = "-H 'Content-Type: application/json' -H 'Authorization: Bearer " .. api_key .. "'"
-  local data = vim.fn.json_encode({ prompt = prompt })
+  -- JSON payload
+  local data = vim.fn.json_encode({
+    model = 'gpt-4o',
+    messages = {
+      { role = 'user', content = prompt },
+    },
+  })
 
-  local cmd = string.format("curl -s -X POST %s -d '%s' '%s'", headers, data, url)
+  -- Construct curl command
+  local cmd = string.format(
+    "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -d '%s' '%s'",
+    opts.api_key,
+    data:gsub("'", "\\'"), -- Escape single quotes for shell compatibility
+    opts.url
+  )
+
+  -- Execute the curl command and get the response
   local response = vim.fn.system(cmd)
 
-    callback(response)
+  -- Parse the JSON response
+  local success, parsed_response = pcall(vim.fn.json_decode, response)
+  if not success then
+    print("Failed to decode response: " .. response)
+    callback("Error: Invalid JSON response")
+    return
+  end
+
+  -- Extract the result from `choices`
+  if parsed_response and parsed_response.choices and parsed_response.choices[1] then
+    callback(parsed_response.choices[1].text)
+  else
+    print("Unexpected API response: " .. vim.inspect(parsed_response))
+    callback("Error: No valid choices in response")
+  end
 end
 
 -- Main function to handle text selection, input, and API call
@@ -96,12 +139,5 @@ function M.replace_with_llm()
     silent = true,
   })
 end
-
-function M.setup()
-  vim.api.nvim_set_keymap('n', '<Leader>test', ":lua print('Plugin initialized and keybinding works!')<CR>", { noremap = true, silent = false })
-  vim.api.nvim_set_keymap('v', 'gl', ":lua require('llm-plug-nvim').replace_with_llm()<CR>", { noremap = true, silent = true })
-end
-
-M.setup()
 
 return M
