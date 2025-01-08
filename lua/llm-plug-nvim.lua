@@ -80,8 +80,8 @@ local function request_llm(prompt, callback)
   end
 
   -- Extract the result from `choices`
-  if parsed_response and parsed_response.choices and parsed_response.choices[1] then
-    callback(parsed_response.choices[1].text)
+  if parsed_response and parsed_response.choices and parsed_response.choices[0] then
+    callback(parsed_response.choices[0].message.content)
   else
     print("Unexpected API response: " .. vim.inspect(parsed_response))
     callback(response)
