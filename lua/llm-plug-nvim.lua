@@ -37,13 +37,7 @@ local function request_llm(prompt, callback)
   local cmd = string.format("curl -s -X POST %s -d '%s' '%s'", headers, data, url)
   local response = vim.fn.system(cmd)
 
-  -- Parse the response
-  local success, parsed_response = pcall(vim.fn.json_decode, response)
-  if success and parsed_response then
-    callback(parsed_response)
-  else
-    callback("Error: Unable to parse LLM response")
-  end
+    callback(response)
 end
 
 -- Main function to handle text selection, input, and API call
